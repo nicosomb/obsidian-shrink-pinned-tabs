@@ -1,11 +1,10 @@
 {
-	"id": "obsidian-shrink-pinned-tabs",
+	"id": "shrink-pinned-tabs",
 	"name": "Shrink pinned tabs",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Shrinks pinned tabs to save screen space.",
 	"author": "Nicolas Lœuillet",
 	"authorUrl": "https://nicolas.loeuillet.org",
-	"fundingUrl": "https://obsidian.md/pricing",
 	"isDesktopOnly": false
 }
