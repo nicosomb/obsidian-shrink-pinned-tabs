@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 interface ShrinkPinnedTabsSettings {
 	hideTitle: boolean;
@@ -38,10 +38,6 @@ export default class ShrinkPinnedTabs extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
 	// refresh function for when we change settings
 	refresh = () => {
 		// re-load the style
@@ -54,7 +50,6 @@ export default class ShrinkPinnedTabs extends Plugin {
 		if (tabs != null) {
 			for (var i = 0; i < tabs.length; i++) {
 				const title = (tabs[i].querySelectorAll('.workspace-tab-header-inner-title'));
-				console.log(title[0]);
 				if (title != null) {
 					title[0].toggleClass('mod-pinned-hide', this.settings.hideTitle);
 				}
