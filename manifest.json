@@ -1,7 +1,7 @@
 {
 	"id": "shrink-pinned-tabs",
 	"name": "Shrink pinned tabs",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Shrinks pinned tabs to save screen space.",
 	"author": "Nicolas Lœuillet",
