@@ -2,10 +2,12 @@ import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 interface ShrinkPinnedTabsSettings {
 	hideTitle: boolean;
+	tabWidth: number;
 }
 
 const DEFAULT_SETTINGS: ShrinkPinnedTabsSettings = {
 	hideTitle: false,
+	tabWidth: 60,
 }
 
 export default class ShrinkPinnedTabs extends Plugin {
@@ -80,6 +82,21 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 					this.plugin.saveData(this.plugin.settings);
 					this.plugin.refresh();
 				})
+			);
+
+		new Setting(containerEl)
+			.setName('Width tab')
+			.setDesc('Defines the width tab when shrinked')
+			.addSlider((text) =>
+				text
+					.setLimits(0, 160, 10)
+					.setValue(this.plugin.settings.tabWidth)
+					.setDynamicTooltip()
+					.onChange((value) => {
+						this.plugin.settings.tabWidth = value;
+						this.plugin.saveData(this.plugin.settings);
+						this.plugin.refresh();
+					})
 			);
 	}
 }
