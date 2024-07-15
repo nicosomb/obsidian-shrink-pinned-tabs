@@ -2,10 +2,12 @@ import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 interface ShrinkPinnedTabsSettings {
 	hideTitle: boolean;
+	tabWidth: number;
 }
 
 const DEFAULT_SETTINGS: ShrinkPinnedTabsSettings = {
 	hideTitle: false,
+	tabWidth: 60,
 }
 
 export default class ShrinkPinnedTabs extends Plugin {
@@ -32,6 +34,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 
 	onunload() {
 		console.log('Unloading Shrink pinned tabs plugin');
+		this.updateStyle()
 	}
 
 	async loadSettings() {
@@ -46,6 +49,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 
 	// update the styles (at the start, or as the result of a settings change)
 	updateStyle = () => {
+		console.log('Update style');
 		const tabs = document.querySelectorAll('.workspace-tab-header:has(.mod-pinned)');
 		if (tabs != null) {
 			for (var i = 0; i < tabs.length; i++) {
@@ -53,6 +57,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 				if (title != null) {
 					title[0].toggleClass('mod-pinned-hide', this.settings.hideTitle);
 				}
+				tabs[i].style.width = this.settings.tabWidth + 'px';
 			}
 		}
 	}
@@ -80,6 +85,21 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 					this.plugin.saveData(this.plugin.settings);
 					this.plugin.refresh();
 				})
+			);
+
+		new Setting(containerEl)
+			.setName('Width tab')
+			.setDesc('Defines the width tab when shrinked')
+			.addSlider((text) =>
+				text
+					.setLimits(0, 160, 10)
+					.setValue(this.plugin.settings.tabWidth)
+					.setDynamicTooltip()
+					.onChange((value) => {
+						this.plugin.settings.tabWidth = value;
+						this.plugin.saveData(this.plugin.settings);
+						this.plugin.refresh();
+					})
 			);
 	}
 }
