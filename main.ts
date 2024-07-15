@@ -34,6 +34,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 
 	onunload() {
 		console.log('Unloading Shrink pinned tabs plugin');
+		this.updateStyle()
 	}
 
 	async loadSettings() {
@@ -48,6 +49,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 
 	// update the styles (at the start, or as the result of a settings change)
 	updateStyle = () => {
+		console.log('Update style');
 		const tabs = document.querySelectorAll('.workspace-tab-header:has(.mod-pinned)');
 		if (tabs != null) {
 			for (var i = 0; i < tabs.length; i++) {
@@ -55,6 +57,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 				if (title != null) {
 					title[0].toggleClass('mod-pinned-hide', this.settings.hideTitle);
 				}
+				tabs[i].style.width = this.settings.tabWidth + 'px';
 			}
 		}
 	}
