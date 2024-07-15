@@ -57,7 +57,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 				if (title != null) {
 					title[0].toggleClass('mod-pinned-hide', this.settings.hideTitle);
 				}
-				tabs[i].style.width = this.settings.tabWidth + 'px';
+				tabs[i].style.maxWidth = this.settings.tabWidth + 'px';
 			}
 		}
 	}
@@ -92,7 +92,7 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 			.setDesc('Defines the width tab when shrinked')
 			.addSlider((text) =>
 				text
-					.setLimits(0, 160, 10)
+					.setLimits(20, 160, 10)
 					.setValue(this.plugin.settings.tabWidth)
 					.setDynamicTooltip()
 					.onChange((value) => {

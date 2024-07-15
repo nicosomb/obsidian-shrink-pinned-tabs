@@ -1,6 +1,6 @@
 {
 	"name": "shrink-pinned-tabs",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Obsidian plugin to shrink pinned tabs in order to save screen space",
 	"main": "main.js",
 	"scripts": {
