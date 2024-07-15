@@ -50,7 +50,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 	// update the styles (at the start, or as the result of a settings change)
 	updateStyle = () => {
 		console.log('Update style');
-		const tabs = document.querySelectorAll('.workspace-tab-header:has(.mod-pinned)');
+		const tabs = document.querySelectorAll<HTMLElement>('.workspace-tab-header:has(.mod-pinned)');
 		if (tabs != null) {
 			for (var i = 0; i < tabs.length; i++) {
 				const title = (tabs[i].querySelectorAll('.workspace-tab-header-inner-title'));
