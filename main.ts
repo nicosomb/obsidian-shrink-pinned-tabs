@@ -12,9 +12,15 @@ const DEFAULT_SETTINGS: ShrinkPinnedTabsSettings = {
 
 export default class ShrinkPinnedTabs extends Plugin {
 	settings: ShrinkPinnedTabsSettings;
+	private styleEl: HTMLStyleElement;
 
 	async onload() {
 		await this.loadSettings();
+
+		// Create a style element to hold our CSS
+		this.styleEl = document.createElement('style');
+		this.styleEl.setAttribute('id', 'shrink-pinned-tabs-styles');
+		document.head.appendChild(this.styleEl);
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new ShrinkPinnedTabsSettingTab(this.app, this));
@@ -29,12 +35,20 @@ export default class ShrinkPinnedTabs extends Plugin {
 			}
 		});
 
+		// Register for workspace layout change events
+		this.registerEvent(
+			this.app.workspace.on('layout-change', () => {
+				this.refresh();
+			})
+		);
+
 		this.refresh()
 	}
 
 	onunload() {
 		console.log('Unloading Shrink pinned tabs plugin');
-		this.updateStyle()
+		// Remove our custom styles when unloading
+		this.styleEl?.remove();
 	}
 
 	async loadSettings() {
@@ -47,19 +61,23 @@ export default class ShrinkPinnedTabs extends Plugin {
 		this.updateStyle()
 	}
 
-	// update the styles (at the start, or as the result of a settings change)
+	// update the styles using CSS rules instead of direct DOM manipulation
 	updateStyle = () => {
-		console.log('Update style');
-		const tabs = document.querySelectorAll<HTMLElement>('.workspace-tab-header:has(.mod-pinned)');
-		if (tabs != null) {
-			for (var i = 0; i < tabs.length; i++) {
-				const title = (tabs[i].querySelectorAll('.workspace-tab-header-inner-title'));
-				if (title != null) {
-					title[0].toggleClass('mod-pinned-hide', this.settings.hideTitle);
-				}
-				tabs[i].style.maxWidth = this.settings.tabWidth + 'px';
+		if (!this.styleEl) return;
+
+		const css = `
+			.workspace-tab-header:has(.mod-pinned) {
+				max-width: ${this.settings.tabWidth}px !important;
 			}
-		}
+			
+			${this.settings.hideTitle ? `
+			.workspace-tab-header:has(.mod-pinned) .workspace-tab-header-inner-title {
+				display: none;
+			}
+			` : ''}
+		`;
+
+		this.styleEl.textContent = css;
 	}
 }
 
@@ -80,9 +98,9 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 			.setName('Hide tab title')
 			.setDesc('Defines if you want to hide the tab title')
 			.addToggle(toggle => toggle.setValue(this.plugin.settings.hideTitle)
-				.onChange((value) => {
+				.onChange(async (value) => {
 					this.plugin.settings.hideTitle = value;
-					this.plugin.saveData(this.plugin.settings);
+					await this.plugin.saveData(this.plugin.settings);
 					this.plugin.refresh();
 				})
 			);
@@ -95,9 +113,9 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 					.setLimits(20, 160, 10)
 					.setValue(this.plugin.settings.tabWidth)
 					.setDynamicTooltip()
-					.onChange((value) => {
+					.onChange(async (value) => {
 						this.plugin.settings.tabWidth = value;
-						this.plugin.saveData(this.plugin.settings);
+						await this.plugin.saveData(this.plugin.settings);
 						this.plugin.refresh();
 					})
 			);
