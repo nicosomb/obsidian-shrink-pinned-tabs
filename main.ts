@@ -3,11 +3,13 @@ import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 interface ShrinkPinnedTabsSettings {
 	hideTitle: boolean;
 	tabWidth: number;
+	disablePinButtonInteraction: boolean;
 }
 
 const DEFAULT_SETTINGS: ShrinkPinnedTabsSettings = {
 	hideTitle: false,
 	tabWidth: 60,
+	disablePinButtonInteraction: false,
 }
 
 export default class ShrinkPinnedTabs extends Plugin {
@@ -30,6 +32,16 @@ export default class ShrinkPinnedTabs extends Plugin {
 			name: 'Toggle tab title display',
 			callback: () => {
 				this.settings.hideTitle = !this.settings.hideTitle;
+				this.saveData(this.settings);
+				this.refresh();
+			}
+		});
+
+		this.addCommand({
+			id: 'toggle-pin-button',
+			name: 'Toggle pin button interaction',
+			callback: () => {
+				this.settings.disablePinButtonInteraction = !this.settings.disablePinButtonInteraction;
 				this.saveData(this.settings);
 				this.refresh();
 			}
@@ -75,6 +87,12 @@ export default class ShrinkPinnedTabs extends Plugin {
 				display: none;
 			}
 			` : ''}
+
+			${this.settings.disablePinButtonInteraction ? `
+			.workspace-tab-header:has(.mod-pinned) .workspace-tab-header-status-container {
+				pointer-events: none;
+			}
+			` : ''}
 		`;
 
 		this.styleEl.textContent = css;
@@ -100,6 +118,17 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 			.addToggle(toggle => toggle.setValue(this.plugin.settings.hideTitle)
 				.onChange(async (value) => {
 					this.plugin.settings.hideTitle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.plugin.refresh();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Disable pin button')
+			.setDesc('Makes the pin icon non-interactive so clicking a pinned tab switches to it instead of unpinning')
+			.addToggle(toggle => toggle.setValue(this.plugin.settings.disablePinButtonInteraction)
+				.onChange(async (value) => {
+					this.plugin.settings.disablePinButtonInteraction = value;
 					await this.plugin.saveData(this.plugin.settings);
 					this.plugin.refresh();
 				})
