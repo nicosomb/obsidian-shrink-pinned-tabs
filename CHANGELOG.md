@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (unreleased)
+## 1.1.0
 
 - Choose clickable, non-clickable or hidden pin icons (#5).
 - Show pinned tab titles always, only on active tabs, or never.
