@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
 
-const result = await build({ entryPoints: ['tab-styles.ts'], bundle: true, write: false, format: 'esm' });
-const { getTabStyles } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
+const result = await build({ entryPoints: ['tab-state.ts'], bundle: true, write: false, format: 'iife', globalName: 'TabModule' });
 const defaults = { enabled: true, titleDisplay: 'always', pinDisplay: 'normal', tabWidth: 60 };
 
 function tab(id, { pinned = true, active = false, linked = false } = {}) {
@@ -47,7 +46,9 @@ async function fixture(page, settings = {}) {
 		document.querySelectorAll('.mod-pinned').forEach(el => el.addEventListener('click', () => window.clicks.pin++));
 		document.querySelector('.mod-linked').addEventListener('click', () => window.clicks.linked++);
 	});
-	await page.addStyleTag({ content: getTabStyles({ ...defaults, ...settings }) });
+	await page.addStyleTag({ content: readFileSync('styles.css', 'utf8') });
+	await page.addScriptTag({ content: result.outputFiles[0].text });
+	await page.evaluate(settings => { window.state = new window.TabModule.TabState(document); window.state.configure(settings); }, { ...defaults, ...settings });
 }
 
 test('only regular pinned desktop tabs are reduced', async ({ page }) => {

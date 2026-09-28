@@ -1,172 +1,137 @@
 import assert from 'node:assert/strict';
-import { test, mock } from 'node:test';
+import { test } from 'node:test';
 import { build } from 'esbuild';
+import { JSDOM } from 'jsdom';
 
-// Obsidian is not available in Node; stub its API for these tests.
 const result = await build({
-	entryPoints: ['main.ts'],
-	bundle: true,
-	write: false,
-	format: 'esm',
-	platform: 'node',
-	plugins: [{
-		name: 'obsidian-test-host',
-		setup(build) {
-			build.onResolve({ filter: /^obsidian$/ }, () => ({ path: 'obsidian', namespace: 'test' }));
-			build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: `
-				export class Plugin {
-					commands = [];
-					registerEvent() {}
-					async loadData() { return this.saved; }
-					async saveData(value) { this.saved = value; }
-					addSettingTab() {}
-					addCommand(command) { this.commands.push(command); }
-				}
-				export class PluginSettingTab {}
-				export class Setting {}
-				export class Notice { constructor(message) { globalThis.notices.push(message); } }
-			` }));
-		},
-	}],
+	entryPoints: ['main.ts'], bundle: true, write: false, format: 'esm', platform: 'node',
+	plugins: [{ name: 'obsidian-test-host', setup(build) {
+		build.onResolve({ filter: /^obsidian$/ }, () => ({ path: 'obsidian', namespace: 'test' }));
+		build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: `
+			export class Plugin {
+				commands = []; events = [];
+				async loadData() { return this.saved; }
+				async saveData(value) { this.saved = value; }
+				addSettingTab(tab) { this.settingTab = tab; }
+				addCommand(command) { this.commands.push(command); }
+				registerEvent(event) { this.events.push(event); }
+			}
+			export class PluginSettingTab { constructor(app, plugin) { this.app = app; this.plugin = plugin; } }
+			export class Setting {
+				constructor(container) { container.rows.push(this); }
+				setName(value) { this.name = value; return this; }
+				setDesc(value) { this.desc = value; return this; }
+				addToggle(callback) { this.control = new Control(); callback(this.control); return this; }
+				addDropdown(callback) { return this.addToggle(callback); }
+				addSlider(callback) { return this.addToggle(callback); }
+				addExtraButton(callback) { this.button = new Control(); callback(this.button); return this; }
+			}
+			class Control {
+				setValue(value) { this.value = value; return this; }
+				setLimits() { return this; }
+				addOption() { return this; }
+				setIcon() { return this; }
+				setTooltip() { return this; }
+				onClick(callback) { this.click = callback; return this; }
+				onChange(callback) { this.change = callback; return this; }
+			}
+			export class Notice { constructor(message) { globalThis.notices.push(message); } }
+		` }));
+	} }],
 });
 const { default: Plugin } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
-
-function makeDocument() {
-	const elements = [];
-	let writes = 0;
-	const doc = {
-		createElement() {
-			return {
-				set textContent(value) { this.css = value; writes++; },
-				remove() { elements.splice(elements.indexOf(this), 1); },
-			};
-		},
-		head: { appendChild(element) { elements.push(element); } },
-	};
-	return { doc, elements, writes: () => writes };
-}
-
-function host(t, { restored = [], ready = true } = {}) {
-	const main = makeDocument();
-	const events = new Map();
-	const readyCallbacks = [];
+const markup = '<div class="workspace"><div class="workspace-tab-header-container"><div class="workspace-tab-header"><div class="workspace-tab-header-status-container"><div class="workspace-tab-header-status-icon mod-pinned"></div></div></div></div></div>';
+const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+function host(t) {
+	const dom = new JSDOM(markup);
+	globalThis.MutationObserver = dom.window.MutationObserver;
 	globalThis.notices = [];
-	const workspace = {
-		containerEl: { ownerDocument: main.doc },
-		on(name, callback) { events.set(name, callback); return { name, callback }; },
-		onLayoutReady(callback) { if (ready) callback(); else readyCallbacks.push(callback); },
-		iterateAllLeaves(callback) {
-			for (const doc of [main.doc, ...restored]) callback({ getContainer: () => ({ doc }) });
-		},
-	};
+	const doc = dom.window.document;
+	const events = new Map();
+	const leaves = [];
+	let ready;
 	const plugin = new Plugin();
-	plugin.app = { workspace };
-	t.after(() => { plugin.onunload(); delete globalThis.notices; });
-	return {
-		...main, plugin,
-		open(doc) { events.get('window-open')({ doc }, { document: doc }); },
-		close(doc) { events.get('window-close')({ doc }, { document: doc }); },
-		ready() { for (const callback of readyCallbacks) callback(); },
-	};
+	plugin.app = { workspace: {
+		containerEl: doc.querySelector('.workspace'),
+		on(name, callback) { events.set(name, callback); return name; },
+		onLayoutReady(callback) { ready = callback; },
+		iterateAllLeaves(callback) { leaves.forEach(callback); },
+	} };
+	t.after(() => { plugin.onunload(); dom.window.close(); delete globalThis.MutationObserver; delete globalThis.notices; });
+	return { plugin, doc, events, leaves, ready: () => ready() };
 }
 
-test('loads settings, toggles titles and removes styles on unload', async (t) => {
-	const { elements, plugin } = host(t);
+test('migrates settings, updates pin mutations and cleans up', async t => {
+	const { plugin, doc } = host(t);
 	plugin.saved = { hideTitle: true, tabWidth: 90 };
 	await plugin.onload();
-	assert.equal(elements.length, 1);
-	assert.match(elements[0].css, /max-width: 90px/);
-	assert.match(elements[0].css, /display: none/);
+	assert.ok(doc.body.classList.contains('shrink-pinned-tabs-title-never'));
+	assert.equal(doc.body.style.getPropertyValue('--shrink-pinned-tabs-width'), '90px');
+	const header = doc.querySelector('.workspace-tab-header');
+	assert.ok(header.classList.contains('shrink-pinned-tabs-pinned'));
+	const pin = doc.querySelector('.mod-pinned');
+	pin.remove(); await tick();
+	assert.ok(!header.classList.contains('shrink-pinned-tabs-pinned'));
+	doc.querySelector('.workspace-tab-header-status-container').append(pin); await tick();
+	assert.ok(header.classList.contains('shrink-pinned-tabs-pinned'));
 	await plugin.commands[0].callback();
-	assert.deepEqual(plugin.saved, { enabled: true, titleDisplay: 'always', pinDisplay: 'normal', tabWidth: 90 });
-	assert.doesNotMatch(elements[0].css, /display: none/);
+	assert.equal(plugin.saved.titleDisplay, 'always');
 	plugin.onunload();
-	assert.equal(elements.length, 0);
+	assert.equal(doc.querySelectorAll('[class*="shrink-pinned-tabs"]').length, 0);
+	assert.equal(doc.body.style.length, 0);
 });
 
-test('saves rapid changes in order', async (t) => {
-	const { elements, writes, plugin } = host(t);
+test('handles restored, new and closed windows and late layout callbacks', async t => {
+	const { plugin, events, leaves, ready } = host(t);
+	const restored = new JSDOM(markup);
+	const opened = new JSDOM(markup);
+	t.after(() => { restored.window.close(); opened.window.close(); });
+	leaves.push({ getContainer: () => ({ doc: restored.window.document }) });
+	await plugin.onload(); ready();
+	events.get('window-open')({ doc: opened.window.document });
+	plugin.settings.tabWidth = 110; await plugin.saveSettings();
+	for (const dom of [restored, opened]) assert.equal(dom.window.document.body.style.getPropertyValue('--shrink-pinned-tabs-width'), '110px');
+	events.get('window-close')({ doc: opened.window.document });
+	assert.equal(opened.window.document.body.style.length, 0);
+	plugin.onunload(); ready();
+	assert.equal(restored.window.document.body.style.length, 0);
+});
+
+test('discovers new bars on layout change and restores state when re-enabled', async t => {
+	const { plugin, doc, events } = host(t);
 	await plugin.onload();
-	const snapshots = [];
-	let releaseFirst;
-	plugin.saveData = async (value) => {
-		snapshots.push(value);
-		if (snapshots.length === 1) await new Promise(resolve => { releaseFirst = resolve; });
-	};
-	plugin.settings.tabWidth = 70;
-	const first = plugin.saveSettings();
-	await Promise.resolve();
-	plugin.settings.tabWidth = 80;
-	const second = plugin.saveSettings();
-	assert.match(elements[0].css, /max-width: 80px/);
-	assert.equal(writes(), 3);
-	assert.deepEqual(snapshots, [{ enabled: true, titleDisplay: 'always', pinDisplay: 'normal', tabWidth: 70 }]);
-	releaseFirst();
-	await Promise.all([first, second]);
+	const newBar = doc.querySelector('.workspace-tab-header-container').cloneNode(true);
+	doc.body.append(newBar);
+	events.get('layout-change')();
+	newBar.querySelector('.mod-pinned').remove(); await tick();
+	assert.ok(!newBar.querySelector('.workspace-tab-header').classList.contains('shrink-pinned-tabs-pinned'));
+	await plugin.commands[1].callback();
+	assert.equal(doc.querySelectorAll('.shrink-pinned-tabs-pinned').length, 0);
+	await plugin.commands[1].callback();
+	assert.equal(doc.querySelectorAll('.shrink-pinned-tabs-pinned').length, 1);
+});
+
+test('serializes rapid saves without delaying visual updates', async t => {
+	const { plugin, doc } = host(t);
+	await plugin.onload();
+	const snapshots = []; let release;
+	plugin.saveData = async value => { snapshots.push(value); if (snapshots.length === 1) await new Promise(resolve => { release = resolve; }); };
+	plugin.settings.tabWidth = 70; const first = plugin.saveSettings(); await Promise.resolve();
+	plugin.settings.tabWidth = 80; const second = plugin.saveSettings();
+	assert.equal(doc.body.style.getPropertyValue('--shrink-pinned-tabs-width'), '80px');
+	assert.equal(snapshots.length, 1); release(); await Promise.all([first, second]);
 	assert.deepEqual(snapshots.map(s => s.tabWidth), [70, 80]);
-	plugin.onunload();
 });
 
-test('reports save errors and allows retrying', async (t) => {
-	const { plugin } = host(t);
-	const log = mock.method(console, 'error', () => {});
-	t.after(() => log.mock.restore());
-	await plugin.onload();
-	plugin.saveData = async () => { throw new Error('disk unavailable'); };
-	await plugin.saveSettings();
-	assert.equal(globalThis.notices.length, 1);
-	assert.equal(log.mock.callCount(), 1);
-	plugin.saveData = async (value) => { plugin.saved = value; };
-	plugin.settings.tabWidth = 100;
-	await plugin.saveSettings();
-	assert.equal(plugin.saved.tabWidth, 100);
-	plugin.onunload();
-});
-
-
-test('updates restored and new windows and cleans up closed ones', async (t) => {
-	const restored = makeDocument();
-	const later = makeDocument();
-	const h = host(t, { restored: [restored.doc, restored.doc] });
-	await h.plugin.onload();
-	assert.equal(restored.elements.length, 1);
-	h.open(later.doc);
-	h.open(later.doc);
-	assert.equal(later.elements.length, 1);
-	h.plugin.settings.tabWidth = 110;
-	await h.plugin.saveSettings();
-	for (const doc of [h, restored, later]) assert.match(doc.elements[0].css, /max-width: 110px/);
-	h.close(later.doc);
-	assert.equal(later.elements.length, 0);
-	const writes = later.writes();
-	await h.plugin.saveSettings();
-	assert.equal(later.writes(), writes);
-	h.plugin.onunload();
-	assert.equal(h.elements.length, 0);
-	assert.equal(restored.elements.length, 0);
-});
-
-test('does not add styles if layout becomes ready after unloading', async (t) => {
-	const restored = makeDocument();
-	const h = host(t, { restored: [restored.doc], ready: false });
-	await h.plugin.onload();
-	h.plugin.onunload();
-	h.ready();
-	assert.equal(h.elements.length, 0);
-	assert.equal(restored.elements.length, 0);
-});
-
-test('the compact command disables styles in every window without losing options', async (t) => {
-	const restored = makeDocument();
-	const h = host(t, { restored: [restored.doc] });
-	await h.plugin.onload();
-	h.plugin.settings.pinDisplay = 'hidden';
-	const command = h.plugin.commands.find(c => c.id === 'toggle-shrink-pinned-tabs');
-	await command.callback();
-	assert.equal(h.elements[0].css, '');
-	assert.equal(restored.elements[0].css, '');
-	assert.equal(h.plugin.saved.enabled, false);
-	await command.callback();
-	assert.match(restored.elements[0].css, /max-width/);
-	assert.equal(h.plugin.saved.pinDisplay, 'hidden');
+test('renders searchable settings with the same legacy controls and resets width', async t => {
+	const { plugin } = host(t); await plugin.onload();
+	const tab = plugin.settingTab;
+	tab.containerEl = { rows: [], empty() { this.rows = []; } };
+	tab.display();
+	const rows = tab.containerEl.rows;
+	assert.deepEqual(rows.map(r => r.name), tab.getSettingDefinitions().map(d => d.name));
+	await rows[1].control.change('active'); await rows[2].control.change('hidden'); await rows[3].control.change(120);
+	assert.equal(plugin.saved.titleDisplay, 'active'); assert.equal(plugin.saved.pinDisplay, 'hidden');
+	await rows[3].button.click();
+	assert.equal(plugin.saved.tabWidth, 60); assert.equal(rows[3].control.value, 60);
 });

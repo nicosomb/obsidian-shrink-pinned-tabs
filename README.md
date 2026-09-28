@@ -20,16 +20,14 @@ This plugin is inspired by [a snippet from woofy31 on Obsidian's forum](https://
 
 ## Settings
 
-- **Compact pinned tabs** enables or disables the plugin's styling without losing your settings.
-- **Tab title** can be shown on all pinned tabs, only on the active tab in each group, or hidden. When hidden, the note icon stays visible.
-- **Pin icon** can be clickable, non-clickable, or hidden. Use the tab's right-click menu to unpin when the icon is non-clickable or hidden. Other status icons, such as linked tabs, remain usable.
-- **Maximum tab width** caps the width between 20 and 160 pixels (default: 60). The reset button restores 60 pixels. Available space and your theme can make tabs narrower.
+- **Compact pinned tabs** enables compact tabs, including in detached windows. The command **Toggle compact pinned tabs** also toggles this setting.
+- **Tab title** shows titles always, only on active tabs, or never. The existing **Toggle tab title display** command switches between always and never. Previous preferences are migrated automatically.
+- **Pin icon** keeps the pin clickable, makes it non-clickable, or hides it. Use the tab context menu to unpin when the icon is non-clickable or hidden.
+- **Maximum tab width** caps the width of pinned tabs between 20 and 160 pixels (default: 60). Available space and your theme can make tabs narrower.
 
-These settings apply to regular desktop tabs, including detached windows. Stacked tabs, sidebar tabs and mobile layouts keep their native appearance. Existing width and hidden-title settings are preserved when updating from 1.0.8.
+On Obsidian 1.13 and newer, all settings are available in settings search. Older versions use the same controls in the plugin settings tab.
 
-The command palette includes **Toggle compact pinned tabs** and **Toggle tab title display**. The title command switches between hidden and always visible; it keeps the shortcut assigned in earlier versions.
-
-Requires Obsidian 1.1.9 or newer and an installer that supports CSS `:has()` (installer 1.1.9 or newer). If styles do not apply on an old installation, update Obsidian using the latest installer.
+Changes take effect immediately and are saved for the next session. If saving fails, a notice asks you to retry.
 
 ## Development
 
@@ -40,16 +38,9 @@ npm ci
 npm run check
 ```
 
-`check` runs lint, tests, the build, and version checks. Tests use a stub of the Obsidian API for settings and window lifecycle behavior.
+`check` runs lint (including the official Obsidian rules), tests, the build, and version checks. Lint warnings fail the check. Unit tests use a stub of the Obsidian API and DOM mutation observers. Run browser checks with `npx playwright install chromium` followed by `npm run test:browser`. CI runs both suites. CSS is checked with the official Obsidian Stylelint rules.
 
-CSS and click behavior are also tested in Chromium:
-
-```sh
-npx playwright install chromium
-npm run test:browser
-```
-
-The browser tests use a small tab fixture. They do not replace testing in Obsidian with your themes and plugins.
+Compact styling applies to regular desktop tabs. Mobile, stacked tabs and sidebar tabs retain their native appearance. Themes that force their own styles may affect the result.
 
 Use `npm run dev` for watch mode. To test manually, copy `main.js`, `manifest.json`, and `styles.css` into `.obsidian/plugins/shrink-pinned-tabs/` in a test vault, then reload the plugin.
 
@@ -61,8 +52,15 @@ Use `npm run dev` for watch mode. To test manually, copy `main.js`, `manifest.js
 - Verify that unpinned tabs are unchanged (regression #3).
 - Check the default theme and a community theme, stacked tabs, detached windows, and mobile.
 
-- Open a detached window before enabling the plugin and another one afterward. Check that settings update in both, and that disabling the plugin restores both windows.
-- Try each pin option, including a linked tab. The link indicator and right-click menu should remain usable.
-- In "Show on active tab" mode, switch between pinned tabs in each group.
+Manual checks in Obsidian, including detached windows and the minimum supported version (1.1.9), remain part of release validation.
 
 Use `npm version patch` to update package, manifest, and compatibility metadata together. Pushing the resulting version tag runs the checks and creates a **draft** GitHub release with the three plugin files; publish it after manual verification.
+
+Release assets are attested by GitHub Actions before the draft release is created. After downloading an asset, its provenance can be checked with:
+
+```sh
+gh attestation verify main.js --repo nicosomb/obsidian-shrink-pinned-tabs
+gh attestation verify styles.css --repo nicosomb/obsidian-shrink-pinned-tabs
+```
+
+The Obsidian ESLint package currently declares older Obsidian and `@eslint/js` dependencies. The overrides in `package.json` keep it on the versions used by this project.
