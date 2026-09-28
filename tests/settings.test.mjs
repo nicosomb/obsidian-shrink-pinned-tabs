@@ -8,25 +8,25 @@ const result = await build({
 	write: false,
 	format: 'esm',
 });
-const { normalizeSettings } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
+const { normalizeSettings, DEFAULT_SETTINGS } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
 
 test('uses defaults for missing or invalid settings', () => {
 	for (const data of [undefined, null, false, 42, 'text', [], {}]) {
-		assert.deepEqual(normalizeSettings(data), { hideTitle: false, tabWidth: 60 });
+		assert.deepEqual(normalizeSettings(data), DEFAULT_SETTINGS);
 	}
 });
 
 test('preserves valid saved settings', () => {
-	const saved = { hideTitle: true, tabWidth: 73.5 };
+	const saved = { ...DEFAULT_SETTINGS, titleDisplay: 'active', pinDisplay: 'hidden', enabled: false, tabWidth: 73.5 };
 	assert.deepEqual(normalizeSettings(saved), saved);
 	assert.notEqual(normalizeSettings(saved), saved);
-	assert.deepEqual(normalizeSettings({ hideTitle: true }), { hideTitle: true, tabWidth: 60 });
+	assert.deepEqual(normalizeSettings({ hideTitle: true }), { ...DEFAULT_SETTINGS, titleDisplay: 'never' });
 });
 
 test('rejects invalid types and non-finite widths', () => {
 	for (const tabWidth of ['80', '20px; color:red', null, NaN, Infinity, -Infinity, {}, []]) {
 		assert.deepEqual(normalizeSettings({ hideTitle: 'false', tabWidth }), {
-			hideTitle: false, tabWidth: 60,
+			...DEFAULT_SETTINGS,
 		});
 	}
 });
@@ -34,7 +34,24 @@ test('rejects invalid types and non-finite widths', () => {
 test('clamps widths without modifying the saved data', () => {
 	for (const [tabWidth, expected] of [[-1, 20], [0, 20], [20, 20], [160, 160], [1000, 160]]) {
 		const saved = { hideTitle: false, tabWidth, extra: 'ignored' };
-		assert.deepEqual(normalizeSettings(saved), { hideTitle: false, tabWidth: expected });
+		assert.deepEqual(normalizeSettings(saved), { ...DEFAULT_SETTINGS, tabWidth: expected });
 		assert.equal(saved.tabWidth, tabWidth);
+	}
+});
+
+
+test('migrates the old hideTitle setting', () => {
+	assert.equal(normalizeSettings({ hideTitle: true }).titleDisplay, 'never');
+	assert.equal(normalizeSettings({ hideTitle: false }).titleDisplay, 'always');
+	assert.equal(normalizeSettings({ hideTitle: true, titleDisplay: 'active' }).titleDisplay, 'active');
+});
+
+test('rejects invalid display options and preserves valid ones', () => {
+	assert.deepEqual(normalizeSettings({ enabled: 'false', pinDisplay: 'invalid', titleDisplay: 'invalid' }), DEFAULT_SETTINGS);
+	for (const titleDisplay of ['always', 'active', 'never']) {
+		for (const pinDisplay of ['normal', 'locked', 'hidden']) {
+			const saved = { ...DEFAULT_SETTINGS, titleDisplay, pinDisplay };
+			assert.deepEqual(normalizeSettings(saved), saved);
+		}
 	}
 });

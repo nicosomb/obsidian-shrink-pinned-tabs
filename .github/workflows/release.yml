@@ -21,6 +21,8 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - name: Attest release assets
         uses: actions/attest@v4
         with:

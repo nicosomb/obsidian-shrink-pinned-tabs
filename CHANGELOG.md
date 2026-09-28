@@ -1,6 +1,18 @@
 # Changelog
 
-## 1.0.9 (unreleased)
+## 1.1.0
+
+- Choose clickable, non-clickable or hidden pin icons (#5).
+- Show pinned tab titles always, only on active tabs, or never.
+- Toggle compact tabs from settings or the command palette, and reset the width.
+- Apply settings to detached windows and preserve existing title preferences.
+- Keep mobile, stacked tabs and sidebar tabs unchanged.
+- Replace `:has()` with classes updated by observers limited to tab bars.
+- Remove `!important` and check CSS with the official Obsidian Stylelint rules.
+- Add browser tests for tab appearance and pin interactions.
+- Require Obsidian 1.1.9 or newer.
+
+## 1.0.9
 
 - Load CSS through `styles.css` instead of injecting a style element.
 - Make settings searchable in Obsidian 1.13 while keeping the settings tab available on older versions.

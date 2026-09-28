@@ -1,7 +1,33 @@
-.shrink-pinned-tabs-enabled .workspace-tab-header:has(.mod-pinned) {
-	max-width: var(--shrink-pinned-tabs-width, 60px) !important;
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned {
+	--tab-max-width: var(--shrink-pinned-tabs-width, 60px);
+
+	max-width: var(--tab-max-width);
 }
 
-.shrink-pinned-tabs-enabled.shrink-pinned-tabs-hide-title .workspace-tab-header:has(.mod-pinned) .workspace-tab-header-inner-title {
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-never:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .workspace-tab-header-inner-title {
+	display: none;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-active:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned:not(.is-active) .workspace-tab-header-inner-title {
+	display: none;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-never:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .workspace-tab-header-inner-icon {
+	display: flex;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-active:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned:not(.is-active) .workspace-tab-header-inner-icon {
+	display: flex;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-pin-locked:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .mod-pinned {
+	pointer-events: none;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-pin-hidden:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .mod-pinned {
+	display: none;
+}
+
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-pin-hidden:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .shrink-pinned-tabs-only-pin {
 	display: none;
 }

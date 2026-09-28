@@ -20,10 +20,12 @@ This plugin is inspired by [a snippet from woofy31 on Obsidian's forum](https://
 
 ## Settings
 
-- **Hide tab title** hides the title of pinned tabs. You can also toggle it from the command palette with **Shrink pinned tabs: Toggle tab title display**.
+- **Compact pinned tabs** enables compact tabs, including in detached windows. The command **Toggle compact pinned tabs** also toggles this setting.
+- **Tab title** shows titles always, only on active tabs, or never. The existing **Toggle tab title display** command switches between always and never. Previous preferences are migrated automatically.
+- **Pin icon** keeps the pin clickable, makes it non-clickable, or hides it. Use the tab context menu to unpin when the icon is non-clickable or hidden.
 - **Maximum tab width** caps the width of pinned tabs between 20 and 160 pixels (default: 60). Available space and your theme can make tabs narrower.
 
-On Obsidian 1.13 and newer, both settings are available in settings search. Older versions use the same controls in the plugin settings tab.
+On Obsidian 1.13 and newer, all settings are available in settings search. Older versions use the same controls in the plugin settings tab.
 
 Changes take effect immediately and are saved for the next session. If saving fails, a notice asks you to retry.
 
@@ -36,7 +38,9 @@ npm ci
 npm run check
 ```
 
-`check` runs lint (including the official Obsidian rules), tests, the build, and version checks. Lint warnings fail the check. Tests use a stub of the Obsidian API; layout checks need to be done in Obsidian.
+`check` runs lint (including the official Obsidian rules), tests, the build, and version checks. Lint warnings fail the check. Unit tests use a stub of the Obsidian API and DOM mutation observers. Run browser checks with `npx playwright install chromium` followed by `npm run test:browser`. CI runs both suites. CSS is checked with the official Obsidian Stylelint rules.
+
+Compact styling applies to regular desktop tabs. Mobile, stacked tabs and sidebar tabs retain their native appearance. Themes that force their own styles may affect the result.
 
 Use `npm run dev` for watch mode. To test manually, copy `main.js`, `manifest.json`, and `styles.css` into `.obsidian/plugins/shrink-pinned-tabs/` in a test vault, then reload the plugin.
 
@@ -48,7 +52,7 @@ Use `npm run dev` for watch mode. To test manually, copy `main.js`, `manifest.js
 - Verify that unpinned tabs are unchanged (regression #3).
 - Check the default theme and a community theme, stacked tabs, detached windows, and mobile.
 
-Detached windows and the minimum supported Obsidian version still need testing.
+Manual checks in Obsidian, including detached windows and the minimum supported version (1.1.9), remain part of release validation.
 
 Use `npm version patch` to update package, manifest, and compatibility metadata together. Pushing the resulting version tag runs the checks and creates a **draft** GitHub release with the three plugin files; publish it after manual verification.
 
