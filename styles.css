@@ -1,1 +1,7 @@
-/* Settings-dependent styles are managed by the plugin. */
+.shrink-pinned-tabs-enabled .workspace-tab-header:has(.mod-pinned) {
+	max-width: var(--shrink-pinned-tabs-width, 60px) !important;
+}
+
+.shrink-pinned-tabs-enabled.shrink-pinned-tabs-hide-title .workspace-tab-header:has(.mod-pinned) .workspace-tab-header-inner-title {
+	display: none;
+}
