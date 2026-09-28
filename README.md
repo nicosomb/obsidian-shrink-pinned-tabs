@@ -17,3 +17,35 @@ This plugin is inspired by [a snippet from woofy31 on Obsidian's forum](https://
 ### Shrinked tabs with no title
 
 ![Display with shrinked tabs and hidden title](docs/shrinked-no-title.png)
+
+## Settings
+
+- **Hide tab title** hides the title of pinned tabs. You can also toggle it from the command palette with **Shrink pinned tabs: Toggle tab title display**.
+- **Maximum tab width** caps the width of pinned tabs between 20 and 160 pixels (default: 60). Available space and your theme can make tabs narrower.
+
+Changes take effect immediately and are saved for the next session. If saving fails, a notice asks you to retry.
+
+## Development
+
+Use Node.js 24 LTS (`nvm use` if you use nvm).
+
+```sh
+npm ci
+npm run check
+```
+
+`check` runs lint, tests, the build, and version checks. Tests use a stub of the Obsidian API; layout checks need to be done in Obsidian.
+
+Use `npm run dev` for watch mode. To test manually, copy `main.js`, `manifest.json`, and `styles.css` into `.obsidian/plugins/shrink-pinned-tabs/` in a test vault, then reload the plugin.
+
+### Before a release
+
+- Check pin/unpin, changing settings, and the title command.
+- Restart Obsidian and confirm settings still apply.
+- Disable the plugin and confirm the original tab appearance returns.
+- Verify that unpinned tabs are unchanged (regression #3).
+- Check the default theme and a community theme, stacked tabs, detached windows, and mobile.
+
+Detached windows and the minimum supported Obsidian version still need testing.
+
+Use `npm version patch` to update package, manifest, and compatibility metadata together. Pushing the resulting version tag runs the checks and creates a **draft** GitHub release with the three plugin files; publish it after manual verification.
