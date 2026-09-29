@@ -15,7 +15,7 @@ function host(t, paths = ['Projects/Home.md', 'Personal/Home.md', 'Projects/Home
 	globalThis.document = doc;
 	globalThis.MutationObserver = dom.window.MutationObserver;
 	globalThis.CSS = { supports(property, value) { const el = doc.createElement('div'); el.style.setProperty(property, value); return !!el.style.getPropertyValue(property); } };
-	doc.createSpan = ({ cls, attr }) => { const el = doc.createElement('span'); el.className = cls; for (const [k, v] of Object.entries(attr)) el.setAttribute(k, v); return el; };
+	dom.window.Node.prototype.createSpan = function ({ cls, attr }) { const el = doc.createElement('span'); el.className = cls; for (const [k, v] of Object.entries(attr)) el.setAttribute(k, v); this.appendChild(el); return el; };
 	const headers = [], leaves = [];
 	const metadata = new Map(paths.map(path => [path, { icon: 'house', color: '#d97706' }]));
 	const files = new Map(paths.map(path => [path, { path, extension: 'md' }]));

@@ -51,7 +51,7 @@ async function fixture(page, settings = {}) {
 	await page.addScriptTag({ content: result.outputFiles[0].text });
 	await page.evaluate(settings => {
 		window.settings = settings;
-		document.createSpan = ({ cls, attr }) => { const el = document.createElement('span'); el.className = cls; for (const [k, v] of Object.entries(attr)) el.setAttribute(k, v); return el; };
+		Node.prototype.createSpan = function ({ cls, attr }) { const el = document.createElement('span'); el.className = cls; for (const [k, v] of Object.entries(attr)) el.setAttribute(k, v); this.appendChild(el); return el; };
 		window.leaves = [];
 		window.metadata = { 'pinned.md': { icon: 'house', color: '#d97706' }, 'linked.md': { icon: '📚', color: '#123456' } };
 		for (const group of document.querySelectorAll('.workspace-tabs')) {

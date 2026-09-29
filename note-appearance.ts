@@ -81,13 +81,13 @@ export class NoteAppearance {
 			decoration = { icon: null, element: null };
 			this.decorated.set(header, decoration);
 		}
-		const inner = header.querySelector('.workspace-tab-header-inner');
+		const inner = header.querySelector<HTMLElement>('.workspace-tab-header-inner');
 		if (icon !== decoration.icon || (icon && decoration.element?.parentElement !== inner)) {
 			decoration.element?.remove();
 			decoration.element = null;
 			decoration.icon = null;
 			if (icon && inner) {
-				const element = header.ownerDocument.createSpan({ cls: iconClass, attr: { 'aria-hidden': 'true' } });
+				const element = inner.createSpan({ cls: iconClass, attr: { 'aria-hidden': 'true' } });
 				const svg = getIcon(icon);
 				if (svg) element.appendChild(svg);
 				else element.textContent = icon;
