@@ -2,6 +2,7 @@ import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { DEFAULT_SETTINGS, MAX_TAB_WIDTH, MIN_TAB_WIDTH, normalizeSettings } from './settings';
 import type { ShrinkPinnedTabsSettings } from './settings';
 import { TabState } from './tab-state';
+import { NoteAppearance } from './note-appearance';
 import type { SettingDefinitionRender, SliderComponent } from 'obsidian';
 
 export default class ShrinkPinnedTabs extends Plugin {
@@ -9,8 +10,10 @@ export default class ShrinkPinnedTabs extends Plugin {
 	private documents = new Map<Document, TabState>();
 	private pendingSave: Promise<void> = Promise.resolve();
 	private unloaded = false;
+	private appearance!: NoteAppearance;
 
 	async onload() {
+		this.appearance = new NoteAppearance(this.app, () => this.settings);
 		await this.loadSettings();
 		this.unloaded = false;
 
@@ -24,6 +27,11 @@ export default class ShrinkPinnedTabs extends Plugin {
 		}));
 		workspace.onLayoutReady(() => this.refreshDocuments());
 		this.registerEvent(workspace.on('layout-change', () => this.refreshDocuments()));
+		this.registerEvent(workspace.on('file-open', () => this.appearance.refresh()));
+		this.registerEvent(this.app.metadataCache.on('changed', (file) => this.appearance.refresh(file.path)));
+		this.registerEvent(this.app.metadataCache.on('deleted', () => this.appearance.refresh()));
+		this.registerEvent(this.app.vault.on('rename', () => this.appearance.refresh()));
+		this.registerEvent(this.app.vault.on('delete', () => this.appearance.refresh()));
 
 		this.addSettingTab(new ShrinkPinnedTabsSettingTab(this.app, this));
 		this.addCommand({
@@ -46,6 +54,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 
 	onunload() {
 		this.unloaded = true;
+		this.appearance.dispose();
 		for (const doc of this.documents.keys()) this.removeDocument(doc);
 	}
 
@@ -53,16 +62,20 @@ export default class ShrinkPinnedTabs extends Plugin {
 		if (this.unloaded) return;
 		this.app.workspace.iterateAllLeaves((leaf) => this.addDocument(leaf.getContainer().doc));
 		for (const state of this.documents.values()) state.refresh();
+		this.appearance.refresh();
 	}
 
 	private addDocument(doc: Document) {
 		if (this.unloaded || this.documents.has(doc)) return;
-		const state = new TabState(doc);
+		const state = new TabState(doc, () => {
+			if (!this.unloaded) this.appearance.refresh();
+		});
 		this.documents.set(doc, state);
 		state.configure(this.settings);
 	}
 
 	private removeDocument(doc: Document) {
+		this.appearance.disposeDocument(doc);
 		this.documents.get(doc)?.dispose();
 		this.documents.delete(doc);
 	}
@@ -74,6 +87,7 @@ export default class ShrinkPinnedTabs extends Plugin {
 	saveSettings(): Promise<void> {
 		this.settings = normalizeSettings(this.settings);
 		for (const state of this.documents.values()) state.configure(this.settings);
+		this.appearance.refresh();
 		const snapshot = { ...this.settings };
 
 		// Keep slider changes from being saved out of order.
@@ -142,6 +156,18 @@ class ShrinkPinnedTabsSettingTab extends PluginSettingTab {
 						widthSlider.setValue(DEFAULT_SETTINGS.tabWidth);
 						await this.plugin.saveSettings();
 					}));
+				},
+			},
+			{
+				name: 'Use note icons and colors',
+				desc: 'Read icon (Lucide name or emoji) and color from note properties. Applies to pinned notes; does not modify files.',
+				render: (setting) => {
+					setting.addToggle(toggle => toggle
+						.setValue(this.plugin.settings.useNoteAppearance)
+						.onChange(async value => {
+							this.plugin.settings.useNoteAppearance = value;
+							await this.plugin.saveSettings();
+						}));
 				},
 			},
 		] satisfies SettingDefinitionRender[];

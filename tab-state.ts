@@ -9,7 +9,7 @@ export class TabState {
 	private marked = new Set<Element>();
 	private enabled = false;
 
-	constructor(private doc: Document) {}
+	constructor(private doc: Document, private onTabsChanged: () => void = () => {}) {}
 
 	configure(settings: ShrinkPinnedTabsSettings) {
 		this.enabled = settings.enabled;
@@ -63,6 +63,7 @@ export class TabState {
 				this.marked.add(status);
 			}
 		}
+		this.onTabsChanged();
 	}
 
 	private unmark(element: Element) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 (unreleased)
+
+- Add an optional setting to read pinned note icons and colors from `icon` and `color` properties.
+- Support Lucide icons and emojis while preserving native icons when properties are removed.
+- Keep separate files with the same name distinct and update every pinned view of a note.
+
 ## 1.1.0
 
 - Choose clickable, non-clickable or hidden pin icons (#5).

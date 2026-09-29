@@ -55,3 +55,9 @@ test('rejects invalid display options and preserves valid ones', () => {
 		}
 	}
 });
+
+
+test('note appearance is opt-in and rejects truthy non-booleans', () => {
+	for (const value of [undefined, 'true', 1, {}, null]) assert.equal(normalizeSettings({ useNoteAppearance: value }).useNoteAppearance, false);
+	assert.equal(normalizeSettings({ useNoteAppearance: true }).useNoteAppearance, true);
+});

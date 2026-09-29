@@ -8,6 +8,7 @@ const result = await build({
 	plugins: [{ name: 'obsidian-test-host', setup(build) {
 		build.onResolve({ filter: /^obsidian$/ }, () => ({ path: 'obsidian', namespace: 'test' }));
 		build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: `
+			export function getIcon() { return null; }
 			export class Plugin {
 				commands = []; events = [];
 				async loadData() { return this.saved; }
@@ -51,7 +52,7 @@ function host(t) {
 	const leaves = [];
 	let ready;
 	const plugin = new Plugin();
-	plugin.app = { workspace: {
+	plugin.app = { metadataCache: { on() {} }, vault: { on() {} }, workspace: {
 		containerEl: doc.querySelector('.workspace'),
 		on(name, callback) { events.set(name, callback); return name; },
 		onLayoutReady(callback) { ready = callback; },
