@@ -41,4 +41,6 @@ Use a separate demo vault with fictional notes and the default light theme. Keep
 - `docs/before.jpg`: compact tabs disabled; Home, Projects and Reading list pinned; Meeting notes and Today unpinned.
 - `docs/compact.jpg`: compact tabs enabled, titles hidden, pin icons hidden, maximum width 60 px.
 
-The current images were captured in Obsidian 1.13.7 with plugin version 1.1.0. They show real application windows.
+- `docs/note-appearance.jpg`: note appearance enabled, Home active with its `icon` and `color` properties visible; Lucide icons and an emoji in the pinned tabs.
+
+All images show real Obsidian 1.13.7 windows. The before/after pair uses plugin version 1.1.0; the note appearance screenshot uses 1.2.0.

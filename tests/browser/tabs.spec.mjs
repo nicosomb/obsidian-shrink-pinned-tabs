@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const result = await build({ entryPoints: ['tab-state.ts'], bundle: true, write: false, format: 'iife', globalName: 'TabModule' });
+const result = await build({ stdin: { contents: "export { TabState } from './tab-state'; export { NoteAppearance } from './note-appearance';", resolveDir: process.cwd() }, alias: { obsidian: resolve('tests/obsidian-icons.mjs') }, bundle: true, write: false, format: 'iife', globalName: 'TabModule' });
 const defaults = { enabled: true, titleDisplay: 'always', pinDisplay: 'normal', tabWidth: 60 };
 
 function tab(id, { pinned = true, active = false, linked = false } = {}) {
@@ -48,7 +49,26 @@ async function fixture(page, settings = {}) {
 	});
 	await page.addStyleTag({ content: readFileSync('styles.css', 'utf8') });
 	await page.addScriptTag({ content: result.outputFiles[0].text });
-	await page.evaluate(settings => { window.state = new window.TabModule.TabState(document); window.state.configure(settings); }, { ...defaults, ...settings });
+	await page.evaluate(settings => {
+		window.settings = settings;
+		Node.prototype.createSpan = function ({ cls, attr }) { const el = document.createElement('span'); el.className = cls; for (const [k, v] of Object.entries(attr)) el.setAttribute(k, v); this.appendChild(el); return el; };
+		window.leaves = [];
+		window.metadata = { 'pinned.md': { icon: 'house', color: '#d97706' }, 'linked.md': { icon: '📚', color: '#123456' } };
+		for (const group of document.querySelectorAll('.workspace-tabs')) {
+			const bar = group.querySelector('.workspace-tab-header-container');
+			const inner = document.createElement('div'); inner.className = 'workspace-tab-header-container-inner'; inner.style.display = 'flex';
+			const panels = document.createElement('div'); panels.className = 'workspace-tab-container';
+			for (const header of [...bar.children]) {
+				inner.append(header);
+				const panel = document.createElement('div'); panel.className = 'workspace-leaf'; const view = document.createElement('div'); panel.append(view); panels.append(panel);
+				window.leaves.push({ view: { containerEl: view }, getViewState() { return { type: 'markdown', state: { file: header.id + '.md' } }; } });
+			}
+			bar.append(inner); group.append(panels);
+		}
+		const app = { workspace: { iterateAllLeaves(cb) { window.leaves.forEach(cb); } }, vault: { getAbstractFileByPath(path) { return { path, extension: 'md' }; } }, metadataCache: { getCache(path) { return { frontmatter: window.metadata[path] }; } } };
+		window.appearance = new window.TabModule.NoteAppearance(app, () => window.settings);
+		window.state = new window.TabModule.TabState(document, () => window.appearance.refresh()); window.state.configure(settings);
+	}, { ...defaults, ...settings });
 }
 
 test('only regular pinned desktop tabs are reduced', async ({ page }) => {
@@ -108,4 +128,32 @@ test('disabling compact tabs restores titles and pin interactions', async ({ pag
 	await expect(page.locator('#pinned .workspace-tab-header-inner-title')).toBeVisible();
 	await page.locator('#pinned .mod-pinned').click();
 	expect(await page.evaluate(() => window.clicks.pin)).toBe(1);
+});
+
+
+test('note icons and colors remain visible in all title modes without changing native content', async ({ page }) => {
+	await fixture(page, { useNoteAppearance: true });
+	await expect(page.locator('#pinned .shrink-pinned-tabs-note-icon')).toBeVisible();
+	await expect(page.locator('#pinned .workspace-tab-header-inner-icon')).toBeHidden();
+	await expect(page.locator('#pinned .workspace-tab-header-inner-title')).toHaveCSS('color', 'rgb(217, 119, 6)');
+	await expect(page.locator('#linked .shrink-pinned-tabs-note-icon')).toHaveText('📚');
+	for (const titleDisplay of ['never', 'active']) {
+		await page.evaluate(titleDisplay => { window.settings.titleDisplay = titleDisplay; window.state.configure(window.settings); }, titleDisplay);
+		await expect(page.locator('#pinned .workspace-tab-header-inner-icon')).toBeHidden();
+		await expect(page.locator('#pinned .shrink-pinned-tabs-note-icon')).toBeVisible();
+	}
+	await page.evaluate(() => { delete window.metadata['pinned.md']; window.appearance.refresh('pinned.md'); });
+	await expect(page.locator('#pinned .shrink-pinned-tabs-note-icon')).toHaveCount(0);
+	await expect(page.locator('#pinned .workspace-tab-header-inner-icon')).toBeVisible();
+});
+
+test('note decorations disappear on unpin, disabling and unload', async ({ page }) => {
+	await fixture(page, { useNoteAppearance: true });
+	await page.locator('#pinned .mod-pinned').evaluate(el => el.remove());
+	await expect(page.locator('#pinned .shrink-pinned-tabs-note-icon')).toHaveCount(0);
+	await page.evaluate(() => { window.settings.useNoteAppearance = false; window.appearance.refresh(); });
+	await expect(page.locator('.shrink-pinned-tabs-note-icon')).toHaveCount(0);
+	await page.evaluate(() => { window.settings.useNoteAppearance = true; window.appearance.refresh(); window.state.dispose(); window.appearance.dispose(); });
+	await expect(page.locator('.shrink-pinned-tabs-note-icon')).toHaveCount(0);
+	await expect(page.locator('#linked')).not.toHaveClass(/shrink-pinned-tabs/);
 });

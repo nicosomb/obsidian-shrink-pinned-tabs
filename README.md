@@ -25,11 +25,29 @@ Right-click a tab and choose **Pin** to make it compact.
 | Compact pinned tabs | Turn compact tabs on or off. |
 | Tab title | Show titles always, only on active tabs, or never. |
 | Pin icon | Keep the pin clickable, make it non-clickable, or hide it. Use the tab menu to unpin when needed. |
+| Use note icons and colors | Read `icon` and `color` from pinned notes. Off by default. |
 | Maximum tab width | Choose 20–160 px in steps of 10. Default: 60 px, with a reset button. |
 
 Changes apply immediately. The width is a maximum: available space and your theme can make tabs narrower.
 
 The command palette also offers **Toggle compact pinned tabs** and **Toggle tab title display**. Settings are searchable on Obsidian 1.13 and newer.
+
+## Note icons and colors
+
+![Pinned tabs with Lucide icons, an emoji and note colors](docs/note-appearance.jpg)
+
+Enable **Use note icons and colors**, then add either property to a note:
+
+```yaml
+---
+icon: house
+color: '#d97706'
+---
+```
+
+`icon` accepts an Obsidian Lucide icon name (such as `house` or `book-open`) or an emoji (such as `📚`). `color` accepts a CSS color and applies to the title and monochrome icon; emojis keep their own colors. Missing or invalid values leave the native appearance unchanged. Changes apply to all pinned tabs showing that note, without modifying the file.
+
+These properties can also be used by Notebook Navigator when its frontmatter icon and color fields are set to `icon` and `color`. Icons and colors stored only in another plugin’s settings, and extra icon packs, are not imported.
 
 ## Compatibility
 

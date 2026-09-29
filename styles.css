@@ -1,3 +1,31 @@
+.shrink-pinned-tabs-note-icon {
+	display: none;
+}
+
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned.shrink-pinned-tabs-custom-icon .workspace-tab-header-inner-icon {
+	display: none;
+}
+
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .shrink-pinned-tabs-note-icon {
+	--icon-size: var(--icon-s);
+
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--tab-text-color);
+}
+
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .shrink-pinned-tabs-note-icon svg {
+	width: var(--icon-size);
+	height: var(--icon-size);
+}
+
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned.shrink-pinned-tabs-custom-color .workspace-tab-header-inner-title,
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned.shrink-pinned-tabs-custom-color .workspace-tab-header-inner-icon,
+body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned.shrink-pinned-tabs-custom-color .shrink-pinned-tabs-note-icon {
+	color: var(--shrink-pinned-tabs-note-color);
+}
+
 body.shrink-pinned-tabs-enabled:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned {
 	--tab-max-width: var(--shrink-pinned-tabs-width, 60px);
 
@@ -12,11 +40,11 @@ body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-active:not(.is-mobile) 
 	display: none;
 }
 
-body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-never:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned .workspace-tab-header-inner-icon {
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-never:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned:where(:not(.shrink-pinned-tabs-custom-icon)) .workspace-tab-header-inner-icon {
 	display: flex;
 }
 
-body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-active:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned:not(.is-active) .workspace-tab-header-inner-icon {
+body.shrink-pinned-tabs-enabled.shrink-pinned-tabs-title-active:not(.is-mobile) .workspace .mod-root .workspace-tabs:not(.mod-stacked) > .workspace-tab-header-container .workspace-tab-header.shrink-pinned-tabs-pinned:not(.is-active):where(:not(.shrink-pinned-tabs-custom-icon)) .workspace-tab-header-inner-icon {
 	display: flex;
 }
 

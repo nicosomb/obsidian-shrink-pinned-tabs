@@ -6,6 +6,7 @@ export interface ShrinkPinnedTabsSettings {
 	titleDisplay: TitleDisplay;
 	pinDisplay: PinDisplay;
 	tabWidth: number;
+	useNoteAppearance: boolean;
 }
 
 export const MIN_TAB_WIDTH = 20;
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: Readonly<ShrinkPinnedTabsSettings> = {
 	titleDisplay: 'always',
 	pinDisplay: 'normal',
 	tabWidth: 60,
+	useNoteAppearance: false,
 };
 
 export function normalizeSettings(data: unknown): ShrinkPinnedTabsSettings {
@@ -24,6 +26,7 @@ export function normalizeSettings(data: unknown): ShrinkPinnedTabsSettings {
 		: {};
 
 	return {
+		useNoteAppearance: saved.useNoteAppearance === true,
 		enabled: typeof saved.enabled === 'boolean' ? saved.enabled : DEFAULT_SETTINGS.enabled,
 		titleDisplay: saved.titleDisplay === 'always' || saved.titleDisplay === 'active' || saved.titleDisplay === 'never'
 			? saved.titleDisplay
