@@ -34,6 +34,8 @@ The command palette also offers **Toggle compact pinned tabs** and **Toggle tab 
 
 ## Note icons and colors
 
+![Pinned tabs with Lucide icons, an emoji and note colors](docs/note-appearance.jpg)
+
 Enable **Use note icons and colors**, then add either property to a note:
 
 ```yaml

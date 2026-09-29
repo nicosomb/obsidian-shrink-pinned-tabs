@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (unreleased)
+## 1.2.0
 
 - Add an optional setting to read pinned note icons and colors from `icon` and `color` properties.
 - Support Lucide icons and emojis while preserving native icons when properties are removed.
